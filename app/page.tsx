@@ -18,15 +18,19 @@ export default function Home() {
 
   // FETCH USER SPECIFIC REPORTS (FOR STATUS UPDATES)
   const fetchMyReports = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: pendingData } = await supabase.from('pending_reports').select('*').eq('user_id', user.id)
-      const { data: approvedData } = await supabase.from('reports').select('*').eq('user_id', user.id)
-      
-      setMyReports([
-        ...(pendingData?.map(r => ({ ...r, status: 'pending' })) || []),
-        ...(approvedData?.map(r => ({ ...r, status: 'approved' })) || [])
-      ])
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: pendingData } = await supabase.from('pending_reports').select('*').eq('user_id', user.id)
+        const { data: approvedData } = await supabase.from('reports').select('*').eq('user_id', user.id)
+        
+        setMyReports([
+          ...(pendingData?.map(r => ({ ...r, status: 'pending' })) || []),
+          ...(approvedData?.map(r => ({ ...r, status: 'approved' })) || [])
+        ])
+      }
+    } catch (err) {
+      console.error("Fetch reports error:", err)
     }
   }
 
@@ -88,22 +92,31 @@ export default function Home() {
   }
 
   const handleSearch = async () => {
-  if (!searchQuery) return;
+    if (!searchQuery) return;
+    const loadingToast = toast.loading('Searching registry...')
 
-  // Search only the standard columns first to see if it works
-  const { data, error } = await supabase
-    .from('reports')
-    .select('*')
-    .or(`target.ilike.%${searchQuery}%,details.ilike.%${searchQuery}%`)
-  
-  if (error) {
-    console.error("Search error:", error)
-    toast.error('Registry Query Failed')
-  } else {
-    setResults(data || [])
-    if (data?.length === 0) toast('Clean Record', { icon: '✅' });
+    try {
+      // SAFE SEARCH: Only looking for target and details to avoid column errors
+      const { data, error } = await supabase
+        .from('reports')
+        .select('*')
+        .or(`target.ilike.%${searchQuery}%,details.ilike.%${searchQuery}%`)
+      
+      toast.dismiss(loadingToast)
+
+      if (error) throw error
+
+      setResults(data || [])
+      if (data?.length === 0) {
+        toast('Clean Record: No reports found', { icon: '✅' })
+      } else {
+        toast.success(`Found ${data.length} records`)
+      }
+    } catch (error: any) {
+      console.error("Search error:", error)
+      toast.error(`Query Failed: ${error.message}`, { id: loadingToast })
+    }
   }
-}
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-slate-200 selection:bg-red-500/30 font-sans pb-20 overflow-x-hidden">
@@ -161,7 +174,6 @@ export default function Home() {
                 <textarea value={details} placeholder="Briefly explain the scam..." className="w-full bg-black/60 border border-white/5 rounded-xl px-4 py-4 h-24 text-sm outline-none focus:border-red-500/40 resize-none" onChange={(e) => setDetails(e.target.value)} required />
               </div>
 
-              {/* SLEEK UPLOAD BUTTON */}
               <div className="space-y-2">
                 <label className="text-[10px] uppercase font-black text-slate-500 tracking-widest block">Evidence (Proof)</label>
                 <div className="relative border-2 border-dashed border-white/5 rounded-xl p-4 text-center hover:bg-white/5 transition-all cursor-pointer">
