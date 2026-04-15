@@ -13,10 +13,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "ScamBud | Crowdsourced Scam Registry",
-  description: "Report and search for scam accounts in real-time.",
-};
+export const metadata = {
+  title: 'ScamBud | Crowdsourced Scam Registry',
+  description: 'Search and report fraudulent phone numbers, bank accounts, and social media handles in real-time.',
+  openGraph: {
+    title: 'ScamBud | Stop the Scam',
+    description: 'Verify suspicious contacts before you pay.',
+    images: ['/og-image.png'], 
+  },
+}
 
 export default function RootLayout({
   children,
