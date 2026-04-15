@@ -66,7 +66,7 @@ export default function LoginPage() {
           providers={['google']}
           // CHANGED: Set this to false to show Email/Password inputs
           onlyThirdPartyProviders={false} 
-          redirectTo={`${origin}/auth/callback`}
+          redirectTo={typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : ''}
         />
 
         <div className="mt-10 text-center">
