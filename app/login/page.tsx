@@ -3,25 +3,34 @@ import { useState } from 'react'
 import { supabase } from '../supabase' 
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
+import { Eye, EyeOff } from 'lucide-react' // Run 'npm install lucide-react' if you haven't!
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     const authToast = toast.loading(isSignUp ? 'Creating account...' : 'Authenticating...')
+    
     try {
       const { error } = isSignUp 
-        ? await supabase.auth.signUp({ email, password })
+        ? await supabase.auth.signUp({ 
+            email, 
+            password,
+          })
         : await supabase.auth.signInWithPassword({ email, password })
+
       if (error) throw error
+
       if (isSignUp) {
-        toast.success('Check email!', { id: authToast })
+        toast.success('Account created! Sign in now.', { id: authToast })
+        setIsSignUp(false) // Switch to login mode
       } else {
         toast.success('Access Granted', { id: authToast })
         router.push('/')
@@ -46,7 +55,6 @@ export default function LoginPage() {
     <main className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       <Toaster position="top-right" />
       
-      {/* Glow effects - using standard Tailwind values */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-red-600/20 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 blur-[120px]" />
@@ -78,10 +86,10 @@ export default function LoginPage() {
 
           <form onSubmit={handleAuth} className="space-y-4">
             <div>
-              <label className="text-[9px] uppercase font-bold text-gray-500 tracking-wider mb-1 block">Email</label>
+              <label className="text-[9px] uppercase font-bold text-gray-500 tracking-wider mb-1 block ml-1">Email</label>
               <input 
                 type="email" 
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-red-500/50 outline-none" 
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-red-500/50 outline-none transition-all" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required 
@@ -89,22 +97,31 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="text-[9px] uppercase font-bold text-gray-500 tracking-wider mb-1 block">Password</label>
-              <input 
-                type="password" 
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-red-500/50 outline-none" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required 
-              />
+              <label className="text-[9px] uppercase font-bold text-gray-500 tracking-wider mb-1 block ml-1">Password</label>
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-red-500/50 outline-none transition-all pr-12" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-red-600 hover:bg-red-500 py-3 rounded-xl font-bold text-xs uppercase tracking-widest mt-2 transition-all"
+              className="w-full bg-red-600 hover:bg-red-500 py-3 rounded-xl font-bold text-xs uppercase tracking-widest mt-2 transition-all active:scale-[0.98]"
             >
-              {loading ? 'WAIT...' : isSignUp ? 'CREATE' : 'LOGIN'}
+              {loading ? 'WAIT...' : isSignUp ? 'CREATE ACCOUNT' : 'LOGIN'}
             </button>
           </form>
 
@@ -113,7 +130,7 @@ export default function LoginPage() {
             <button 
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="ml-2 text-red-500 hover:text-red-400"
+              className="ml-2 text-red-500 hover:text-red-400 font-black transition-colors"
             >
               {isSignUp ? "Sign In" : "Sign Up"}
             </button>
