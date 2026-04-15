@@ -88,18 +88,22 @@ export default function Home() {
   }
 
   const handleSearch = async () => {
-    const { data, error } = await supabase
-      .from('reports')
-      .select('*')
-      .or(`target.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%,scammer_name.ilike.%${searchQuery}%`)
-    
-    if (error) toast.error('Query failed')
-    else {
-      setResults(data || [])
-      if (data?.length) toast.success(`Found ${data.length} record(s)`)
-      else if (searchQuery) toast('Clean Record', { icon: '✅' })
-    }
+  if (!searchQuery) return;
+
+  // Search only the standard columns first to see if it works
+  const { data, error } = await supabase
+    .from('reports')
+    .select('*')
+    .or(`target.ilike.%${searchQuery}%,details.ilike.%${searchQuery}%`)
+  
+  if (error) {
+    console.error("Search error:", error)
+    toast.error('Registry Query Failed')
+  } else {
+    setResults(data || [])
+    if (data?.length === 0) toast('Clean Record', { icon: '✅' });
   }
+}
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-slate-200 selection:bg-red-500/30 font-sans pb-20 overflow-x-hidden">
