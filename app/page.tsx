@@ -21,11 +21,21 @@ export default function Home() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: pendingData } = await supabase.from('pending_reports').select('*').eq('user_id', user.id)
-        const { data: approvedData } = await supabase.from('reports').select('*').eq('user_id', user.id)
+        // 1. Fetch from pending_reports (Status: 'pending' or 'rejected')
+        const { data: pendingData } = await supabase
+          .from('pending_reports')
+          .select('*')
+          .eq('user_id', user.id)
+
+        // 2. Fetch from reports (Status: 'approved')
+        const { data: approvedData } = await supabase
+          .from('reports')
+          .select('*')
+          .eq('user_id', user.id)
         
+        // Combine them into one list
         setMyReports([
-          ...(pendingData?.map(r => ({ ...r, status: 'pending' })) || []),
+          ...(pendingData?.map(r => ({ ...r, status: r.status || 'pending' })) || []),
           ...(approvedData?.map(r => ({ ...r, status: 'approved' })) || [])
         ])
       }
@@ -75,7 +85,8 @@ export default function Home() {
           category, 
           image_url: imagePath, 
           user_id: user.id, 
-          user_email: user.email 
+          user_email: user.email,
+          status: 'pending' // Explicitly set starting status
         }])
       
       if (error) throw error
@@ -96,14 +107,12 @@ export default function Home() {
     const loadingToast = toast.loading('Searching registry...')
 
     try {
-      // SAFE SEARCH: Only looking for target and details to avoid column errors
       const { data, error } = await supabase
         .from('reports')
         .select('*')
         .or(`target.ilike.%${searchQuery}%,details.ilike.%${searchQuery}%`)
       
       toast.dismiss(loadingToast)
-
       if (error) throw error
 
       setResults(data || [])
@@ -113,8 +122,7 @@ export default function Home() {
         toast.success(`Found ${data.length} records`)
       }
     } catch (error: any) {
-      console.error("Search error:", error)
-      toast.error(`Query Failed: ${error.message}`, { id: loadingToast })
+      toast.error(`Query Failed: ${error.message}`)
     }
   }
 
@@ -126,6 +134,7 @@ export default function Home() {
       <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-600/5 blur-[120px] pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/5 blur-[120px] pointer-events-none" />
 
+      {/* Navbar */}
       <nav className="border-b border-white/5 bg-black/40 backdrop-blur-xl sticky top-0 z-50 px-4 py-4 md:px-8">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -192,11 +201,20 @@ export default function Home() {
             {/* MY REPORTS STATUS SECTION */}
             <div className="mt-10 pt-10 border-t border-white/5">
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Your Submissions</h3>
-                <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                     {myReports.length > 0 ? myReports.map(r => (
                         <div key={r.id} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                            <span className="text-[11px] font-mono text-slate-300 truncate w-32">{r.target}</span>
-                            <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-md ${r.status === 'approved' ? 'bg-green-500/20 text-green-500' : 'bg-yellow-500/20 text-yellow-500 animate-pulse'}`}>
+                            <div className="flex flex-col">
+                              <span className="text-[11px] font-mono text-slate-300 truncate w-32">{r.target}</span>
+                              {r.status === 'rejected' && (
+                                <span className="text-[8px] text-red-500/50 uppercase font-black italic tracking-tighter">Review Failed</span>
+                              )}
+                            </div>
+                            <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-md tracking-wider ${
+                              r.status === 'approved' ? 'bg-green-500/20 text-green-500' : 
+                              r.status === 'rejected' ? 'bg-red-500/20 text-red-500' : 
+                              'bg-yellow-500/20 text-yellow-500 animate-pulse'
+                            }`}>
                                 {r.status}
                             </span>
                         </div>
@@ -214,14 +232,14 @@ export default function Home() {
               className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-white" 
               onChange={(e) => setSearchQuery(e.target.value)} 
             />
-            <button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-bold text-xs text-white">QUERY</button>
+            <button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-bold text-xs text-white uppercase tracking-widest">Query</button>
           </div>
 
           <div className="space-y-4">
             {results.length > 0 ? results.map((r) => (
               <div key={r.id} className="bg-white/[0.02] border border-white/5 p-6 rounded-[32px] hover:bg-white/[0.04] transition-all">
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-xl font-mono font-bold text-red-500">{r.target}</h3>
+                  <h3 className="text-xl font-mono font-bold text-red-500 tracking-tighter">{r.target}</h3>
                   <span className="text-[9px] font-black bg-white/5 px-3 py-1 rounded-full uppercase border border-white/5">{r.category}</span>
                 </div>
                 {r.scammer_name && <p className="text-[10px] font-black text-slate-500 uppercase mb-2">Alias: {r.scammer_name}</p>}
