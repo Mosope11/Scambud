@@ -16,24 +16,20 @@ export default function Home() {
 
   const categories = ["General", "Bank Fraud", "WhatsApp/Telegram", "Fake Job", "Online Shopping"]
 
-  // FETCH USER SPECIFIC REPORTS (FOR STATUS UPDATES)
   const fetchMyReports = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // 1. Fetch from pending_reports (Status: 'pending' or 'rejected')
         const { data: pendingData } = await supabase
           .from('pending_reports')
           .select('*')
           .eq('user_id', user.id)
 
-        // 2. Fetch from reports (Status: 'approved')
         const { data: approvedData } = await supabase
           .from('reports')
           .select('*')
           .eq('user_id', user.id)
         
-        // Combine them into one list
         setMyReports([
           ...(pendingData?.map(r => ({ ...r, status: r.status || 'pending' })) || []),
           ...(approvedData?.map(r => ({ ...r, status: 'approved' })) || [])
@@ -86,7 +82,7 @@ export default function Home() {
           image_url: imagePath, 
           user_id: user.id, 
           user_email: user.email,
-          status: 'pending' // Explicitly set starting status
+          status: 'pending'
         }])
       
       if (error) throw error
@@ -130,11 +126,9 @@ export default function Home() {
     <div className="min-h-screen bg-[#0a0a0c] text-slate-200 selection:bg-red-500/30 font-sans pb-20 overflow-x-hidden">
       <Toaster position="top-right" />
 
-      {/* Decorative Blurs */}
       <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-600/5 blur-[120px] pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/5 blur-[120px] pointer-events-none" />
 
-      {/* Navbar */}
       <nav className="border-b border-white/5 bg-black/40 backdrop-blur-xl sticky top-0 z-50 px-4 py-4 md:px-8">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -149,7 +143,6 @@ export default function Home() {
 
       <main className="max-w-6xl mx-auto px-4 md:px-6 mt-8 md:mt-16 grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 relative">
         
-        {/* REPORT FORM SECTION */}
         <section className="lg:col-span-5 order-2 lg:order-1">
           <div className="bg-white/[0.02] border border-white/10 rounded-[32px] p-6 md:p-8 backdrop-blur-md sticky top-24">
             <h2 className="text-xl font-bold mb-8 flex items-center gap-3 text-white tracking-tighter uppercase">
@@ -198,7 +191,6 @@ export default function Home() {
               </button>
             </form>
 
-            {/* MY REPORTS STATUS SECTION */}
             <div className="mt-10 pt-10 border-t border-white/5">
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Your Submissions</h3>
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
@@ -224,7 +216,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* SEARCH & REGISTRY FEED */}
         <section className="lg:col-span-7 order-1 lg:order-2 space-y-6">
           <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-2 flex gap-2 backdrop-blur-md">
             <input 

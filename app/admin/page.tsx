@@ -12,7 +12,6 @@ export default function AdminDashboard() {
   const [pending, setPending] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   
-  // 1. Double Security Check: Checks both LocalStorage AND Supabase Auth
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -22,7 +21,7 @@ export default function AdminDashboard() {
         setIsAuthenticated(true)
       } else {
         setIsAuthenticated(false)
-        localStorage.removeItem('scambud_admin') // Clean up if session is dead
+        localStorage.removeItem('scambud_admin')
       }
     }
     checkAuth()
@@ -52,7 +51,6 @@ export default function AdminDashboard() {
 
   const handleAction = async (report: any, action: 'approve' | 'reject') => {
     if (action === 'approve') {
-      // 1. Move to the live 'reports' table
       const { error } = await supabase.from('reports').insert([{
         target: report.target, 
         details: report.details, 
@@ -66,7 +64,6 @@ export default function AdminDashboard() {
         return toast.error(`Move failed: ${error.message}`); 
       }
 
-      // 2. Send the notification email if they have one
       if (report.user_email) {
         try {
           await sendApprovalEmail(report.user_email, report.target)
@@ -77,17 +74,15 @@ export default function AdminDashboard() {
       }
     }
 
-    // 3. Delete from the pending list
     await supabase.from('pending_reports').delete().eq('id', report.id)
     toast.success(action === 'approve' ? 'Live on Registry' : 'Discarded')
     fetchPending()
   }
 
-  // 4. Secure Logout Function
   const handleLogout = async () => {
-    localStorage.removeItem('scambud_admin') // Remove admin access
-    await supabase.auth.signOut()           // Sign out of Google
-    window.location.href = "/login"         // Hard redirect to clear all states
+    localStorage.removeItem('scambud_admin')
+    await supabase.auth.signOut()
+    window.location.href = "/login"
   }
 
   if (!isAuthenticated) {

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { supabase } from '../supabase' 
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
-import { Eye, EyeOff } from 'lucide-react' // Run 'npm install lucide-react' if you haven't!
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
