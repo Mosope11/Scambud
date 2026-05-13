@@ -2,23 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from './providers';
-import Script from 'next/script'
 
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <head>
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4905213854542365"
-          crossOrigin="anonymous"
-          strategy="afterInteractive" // Loads the script after the page is interactive
-        />
-      </head>
-      <body>{children}</body>
-    </html>
-  )
-}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

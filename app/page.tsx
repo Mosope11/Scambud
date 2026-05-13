@@ -2,23 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import toast, { Toaster } from 'react-hot-toast'
-import Script from 'next/script'
 
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <head>
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4905213854542365"
-          crossOrigin="anonymous"
-          strategy="afterInteractive" // Loads the script after the page is interactive
-        />
-      </head>
-      <body>{children}</body>
-    </html>
-  )
-}
 
 export default function Home() {
   const [scammerName, setScammerName] = useState('')
